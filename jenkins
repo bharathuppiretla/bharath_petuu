@@ -1,6 +1,6 @@
 node {
    def mvnHome
-   def server =Artifactory.server 'artifactory'
+  // def server =Artifactory.server 'artifactory'
    stage('Preparation') { // for display purposes
       // Get some code from a GitHub repository
        git 'https://github.com/bharathuppiretla/spring-petclinic.git' 
@@ -21,22 +21,6 @@ node {
         //}
    //sonar
    
-   stage('Quality Analysis') {
-        withSonarQubeEnv('sonar') {
-        sh 'mvn clean package sonar:sonar'
-        }
-    }
-    
-    stage("Quality Gate"){
-       timeout(time: 1, unit: 'HOURS') { 
-           def qg = waitForQualityGate() 
-            if (qg.status != 'OK') {
-                currentBuild.status='FAILURE'
-               error "Pipeline aborted due to quality gate failure: ${qg.status}"
-            }
-        }
-    }
-   
    
    stage('Build') {
       // Run the maven build
@@ -48,26 +32,18 @@ node {
          }
       }
    }
-   stage('Artifactory upload') { 
-        def uploadSpec = """ 
-        {  
-		"files": [ { "pattern": "/var/lib/jenkins/workspace/example_pipeline/target/*.jar", "target": "example-repo-local" } ]  
-        }"""  
-        server.upload(uploadSpec) 
-        }
-  
+   
   stage('Petclinic Docker Image') {
    
-sh "sudo docker build -t bharathuppiretla/petclinic ."
-sh "sudo docker push bharathuppiretla/petclinic"
+sh "sudo docker build -t bharathuppiretla/petclinic1 ."
+sh "sudo docker push bharathuppiretla/petclinic1"
 
   
 }
 stage('composeup')
 {
 sh "sudo docker-compose up -d --build"
-sh "sudo docker pull bharathuppiretla/petclinic"
+sh "sudo docker pull bharathuppiretla/petclinic1"
 }
  
-   
 }
